@@ -307,7 +307,7 @@ function buildAuthorizationPage(parameters, errorMessage = '') {
     <main class="card">
         <img
             class="logo"
-            src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png"
+            src="/images/poke-ball.png"
             alt="Pokébola"
         >
 

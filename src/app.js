@@ -51,6 +51,9 @@ app.get('/health', (request, response) => {
 app.use('/auth', authRoutes);
 app.use('/oauth', oauthRoutes);
 app.use('/api/profile', profileRoutes);
+app.use(
+    express.static('public')
+);
 
 app.use((request, response) => {
     response.status(404).json({
