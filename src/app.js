@@ -11,7 +11,11 @@ const oauthRoutes =
 
 const app = express();
 
+app.set('trust proxy', 1);
+
 app.disable('x-powered-by');
+
+app.use(express.static('public'));
 
 app.use(helmet());
 
