@@ -32,6 +32,15 @@ app.disable('x-powered-by');
  * por Cross-Origin-Resource-Policy.
  */
 app.use('/oauth/token', (request, response, next) => {
+    console.log('[TOKEN-ENTRADA]', {
+        method: request.method,
+        ip: request.ip,
+        origin: request.headers.origin || '(sin origin)',
+        userAgent: (request.headers['user-agent'] || '').slice(0, 80),
+        hasAuth: Boolean(request.headers.authorization),
+        contentType: request.headers['content-type'] || '(sin content-type)'
+    });
+
     const origin = request.headers.origin;
 
     if (origin && AMAZON_ORIGINS.includes(origin)) {
