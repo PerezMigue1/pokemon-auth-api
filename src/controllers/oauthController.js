@@ -506,8 +506,8 @@ function showAuthorizationPage(
             .send(
                 `<h1>Solicitud OAuth inválida</h1>
                  <p>${escapeHtml(
-                     validation.message
-                 )}</p>`
+                    validation.message
+                )}</p>`
             );
     }
 
@@ -544,8 +544,8 @@ async function authorizeUser(
                 .send(
                     `<h1>Solicitud OAuth inválida</h1>
                      <p>${escapeHtml(
-                         validation.message
-                     )}</p>`
+                        validation.message
+                    )}</p>`
                 );
         }
 
@@ -628,6 +628,18 @@ async function authorizeUser(
         redirectUrl.searchParams.set(
             'state',
             parameters.state
+        );
+
+        console.log('[OAUTH] Redirigiendo a Alexa:', {
+            redirectUri: parameters.redirectUri,
+            statePresent: Boolean(parameters.state),
+            authorizationCodeGenerated:
+                Boolean(authorizationCode)
+        });
+
+        console.log(
+            '[OAUTH] URL final de redirección:',
+            redirectUrl.toString()
         );
 
         return response.redirect(
