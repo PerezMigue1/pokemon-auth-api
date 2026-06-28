@@ -1,3 +1,4 @@
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -129,7 +130,7 @@ app.use(express.urlencoded({
  * Archivos públicos:
  * /images/pokeball.png
  */
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, '../public')));
 
 /*
  * Limitador general de solicitudes.
