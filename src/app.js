@@ -88,8 +88,25 @@ app.use((request, response, next) => {
 
 /*
  * Encabezados HTTP de seguridad.
+ * form-action incluye los dominios de Amazon para que el navegador
+ * permita la redirección del formulario OAuth hacia pitangui/layla/alexa.
+ * unsafe-inline en script-src permite el script inline del formulario de login.
  */
-app.use(helmet());
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+            'form-action': [
+                "'self'",
+                'https://pitangui.amazon.com',
+                'https://layla.amazon.com',
+                'https://alexa.amazon.co.jp',
+                'https://alexa.amazon.com'
+            ],
+            'script-src': ["'self'", "'unsafe-inline'"]
+        }
+    }
+}));
 
 /*
  * Helmet establece Cross-Origin-Resource-Policy: same-origin globalmente.
