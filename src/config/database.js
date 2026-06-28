@@ -1,15 +1,21 @@
 const mongoose = require('mongoose');
 
-let connected = false;
+let connectionPromise = null;
 
 async function connectDatabase() {
-    if (connected) {
+    if (mongoose.connection.readyState === 1) {
         return;
     }
 
-    await mongoose.connect(process.env.MONGODB_URI);
-    connected = true;
-    console.log('MongoDB conectado correctamente.');
+    if (!connectionPromise) {
+        connectionPromise = mongoose
+            .connect(process.env.MONGODB_URI)
+            .then(() => {
+                console.log('MongoDB conectado correctamente.');
+            });
+    }
+
+    await connectionPromise;
 }
 
 module.exports = connectDatabase;
