@@ -680,10 +680,10 @@ async function authorizeUser(
                 parameters.scope,
 
             codeChallenge:
-                parameters.codeChallenge,
+                parameters.codeChallenge || null,
 
             codeChallengeMethod:
-                parameters.codeChallengeMethod,
+                parameters.codeChallengeMethod || null,
 
             expiresAt:
                 new Date(
