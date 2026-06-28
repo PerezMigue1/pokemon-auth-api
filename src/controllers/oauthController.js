@@ -44,10 +44,18 @@ function isAllowedRedirectUri(redirectUri) {
 }
 
 function isValidClientId(clientId) {
-    return (
-        typeof clientId === 'string' &&
-        clientId === process.env.ALEXA_CLIENT_ID
-    );
+    const expected = process.env.ALEXA_CLIENT_ID || '';
+    const match = typeof clientId === 'string' && clientId === expected;
+
+    if (!match) {
+        console.log('[DEBUG CLIENT_ID]', {
+            receivedLength: String(clientId || '').length,
+            expectedLength: expected.length,
+            envVarSet: Boolean(expected)
+        });
+    }
+
+    return match;
 }
 
 function safeEqual(valueA, valueB) {
