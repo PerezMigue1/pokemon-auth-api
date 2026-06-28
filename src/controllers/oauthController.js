@@ -165,7 +165,7 @@ function oauthError(
     });
 }
 
-function buildAuthorizationPage(parameters, errorMessage = '') {
+function buildAuthorizationPage(parameters, errorMessage = '', rawState = '') {
     const {
         clientId,
         redirectUri,
@@ -337,6 +337,12 @@ function buildAuthorizationPage(parameters, errorMessage = '') {
                 type="hidden"
                 name="state"
                 value="${escapeHtml(state)}"
+            >
+
+            <input
+                type="hidden"
+                name="raw_state"
+                value="${escapeHtml(rawState)}"
             >
 
             <input
@@ -519,6 +525,23 @@ function showAuthorizationPage(
             );
     }
 
+    /*
+     * Extraemos el state RAW (sin decodificar) de la URL
+     * para preservar exactamente los caracteres que Amazon envió.
+     * Express decodifica "+" como espacio, lo cual corrompería
+     * el base64 si Amazon no codificó el "+" como "%2B".
+     */
+    const rawQueryString =
+        request.url.split('?')[1] || '';
+
+    const rawStateMatch =
+        rawQueryString.match(
+            /(?:^|&)state=([^&]*)/
+        );
+
+    const rawState =
+        rawStateMatch ? rawStateMatch[1] : '';
+
     console.log('[OAUTH] Solicitud de autorización:', {
         redirectUri:
             validation.parameters.redirectUri,
@@ -530,6 +553,9 @@ function showAuthorizationPage(
             fingerprint(
                 validation.parameters.state
             ),
+
+        rawStateFingerprint:
+            fingerprint(rawState),
 
         codeChallengePresent:
             Boolean(
@@ -547,7 +573,9 @@ function showAuthorizationPage(
         .type('html')
         .send(
             buildAuthorizationPage(
-                validation.parameters
+                validation.parameters,
+                '',
+                rawState
             )
         );
 }
@@ -609,7 +637,8 @@ async function authorizeUser(
                 .send(
                     buildAuthorizationPage(
                         parameters,
-                        'Correo o contraseña incorrectos.'
+                        'Correo o contraseña incorrectos.',
+                        String(request.body.raw_state || '')
                     )
                 );
         }
@@ -654,47 +683,56 @@ async function authorizeUser(
                 )
         });
 
-        const redirectUrl =
-            new URL(
-                parameters.redirectUri
-            );
+        /*
+         * Usamos el raw_state (URL-encoded exactamente como
+         * Amazon lo envió) para evitar que la decodificación
+         * de "+" como espacio corrompa el base64 del estado.
+         * El navegador re-encodea el valor del campo oculto,
+         * y Express lo decodifica de vuelta al valor raw original.
+         */
+        const rawState =
+            String(request.body.raw_state || '');
 
-        redirectUrl.searchParams.set(
-            'state',
-            parameters.state
-        );
+        const stateSegment =
+            rawState
+                ? `state=${rawState}`
+                : `state=${encodeURIComponent(parameters.state)}`;
 
-        redirectUrl.searchParams.set(
-            'code',
-            authorizationCode
-        );
+        const separator =
+            parameters.redirectUri.includes('?')
+                ? '&'
+                : '?';
 
         const finalRedirectUrl =
-            redirectUrl.toString();
+            parameters.redirectUri +
+            separator +
+            stateSegment +
+            '&code=' +
+            encodeURIComponent(authorizationCode);
 
         console.log('[OAUTH] Redirección preparada:', {
             redirectUri:
                 parameters.redirectUri,
 
-            stateLength:
-                parameters.state.length,
-
             stateFingerprint:
+                fingerprint(parameters.state),
+
+            rawStateFingerprint:
+                fingerprint(rawState),
+
+            stateMatchesRaw:
+                fingerprint(parameters.state) ===
                 fingerprint(
-                    parameters.state
+                    decodeURIComponent(
+                        rawState.replace(/\+/g, ' ')
+                    )
                 ),
 
             authorizationCodeLength:
                 authorizationCode.length,
 
             finalUrlLength:
-                finalRedirectUrl.length,
-
-            protocol:
-                redirectUrl.protocol,
-
-            hostname:
-                redirectUrl.hostname
+                finalRedirectUrl.length
         });
 
         response.set({
