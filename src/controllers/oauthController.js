@@ -544,8 +544,8 @@ async function authorizeUser(
                 .send(
                     `<h1>Solicitud OAuth inválida</h1>
                      <p>${escapeHtml(
-                        validation.message
-                    )}</p>`
+                         validation.message
+                     )}</p>`
                 );
         }
 
@@ -559,7 +559,9 @@ async function authorizeUser(
             .toLowerCase();
 
         const password =
-            String(request.body.password || '');
+            String(
+                request.body.password || ''
+            );
 
         const user = await User.findOne({
             email
@@ -567,7 +569,9 @@ async function authorizeUser(
 
         const credentialsAreValid =
             user &&
-            await user.verifyPassword(password);
+            await user.verifyPassword(
+                password
+            );
 
         if (
             !credentialsAreValid ||
@@ -584,14 +588,20 @@ async function authorizeUser(
                 );
         }
 
+        /*
+         * Código de autorización temporal.
+         * Se guarda únicamente su hash en MongoDB.
+         */
         const authorizationCode =
             crypto
-                .randomBytes(48)
+                .randomBytes(32)
                 .toString('base64url');
 
         await AuthorizationCode.create({
             codeHash:
-                hashToken(authorizationCode),
+                hashToken(
+                    authorizationCode
+                ),
 
             userId:
                 user._id,
@@ -613,40 +623,86 @@ async function authorizeUser(
 
             expiresAt:
                 new Date(
-                    Date.now() + 5 * 60 * 1000
+                    Date.now() +
+                    5 * 60 * 1000
                 )
         });
 
+        /*
+         * Utilizamos exactamente la URL de
+         * redirección recibida desde Alexa.
+         */
         const redirectUrl =
-            new URL(parameters.redirectUri);
+            new URL(
+                parameters.redirectUri
+            );
 
-        redirectUrl.searchParams.set(
-            'code',
-            authorizationCode
-        );
-
+        /*
+         * Conservamos exactamente el mismo
+         * state recibido desde Alexa.
+         */
         redirectUrl.searchParams.set(
             'state',
             parameters.state
         );
 
-        console.log('[OAUTH] Redirigiendo a Alexa:', {
-            redirectUri: parameters.redirectUri,
-            statePresent: Boolean(parameters.state),
-            authorizationCodeGenerated:
-                Boolean(authorizationCode)
-        });
-
-        console.log(
-            '[OAUTH] URL final de redirección:',
-            redirectUrl.toString()
+        /*
+         * Agregamos el código de autorización.
+         */
+        redirectUrl.searchParams.set(
+            'code',
+            authorizationCode
         );
 
+        /*
+         * No imprimimos el código ni el state
+         * completos porque son datos sensibles.
+         */
+        console.log(
+            '[OAUTH] Redirección preparada:',
+            {
+                redirectUri:
+                    parameters.redirectUri,
+
+                statePresent:
+                    Boolean(
+                        parameters.state
+                    ),
+
+                authorizationCodeGenerated:
+                    Boolean(
+                        authorizationCode
+                    ),
+
+                protocol:
+                    redirectUrl.protocol,
+
+                hostname:
+                    redirectUrl.hostname
+            }
+        );
+
+        /*
+         * 303 obliga al navegador a continuar
+         * mediante GET después del POST del
+         * formulario de inicio de sesión.
+         */
         return response.redirect(
-            302,
+            303,
             redirectUrl.toString()
         );
     } catch (error) {
+        console.error(
+            '[OAUTH] Error autorizando usuario:',
+            {
+                message:
+                    error.message,
+
+                name:
+                    error.name
+            }
+        );
+
         return next(error);
     }
 }
