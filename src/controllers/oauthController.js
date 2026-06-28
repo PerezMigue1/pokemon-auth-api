@@ -511,6 +511,24 @@ function showAuthorizationPage(
             );
     }
 
+    console.log('[OAUTH] Solicitud de autorización:', {
+        redirectUri:
+            validation.parameters.redirectUri,
+
+        stateLength:
+            validation.parameters.state.length,
+
+        stateFingerprint:
+            fingerprint(
+                validation.parameters.state
+            ),
+
+        codeChallengePresent:
+            Boolean(
+                validation.parameters.codeChallenge
+            )
+    });
+
     response.set({
         'Cache-Control': 'no-store',
         Pragma: 'no-cache'
@@ -544,8 +562,8 @@ async function authorizeUser(
                 .send(
                     `<h1>Solicitud OAuth inválida</h1>
                      <p>${escapeHtml(
-                         validation.message
-                     )}</p>`
+                        validation.message
+                    )}</p>`
                 );
         }
 
@@ -594,7 +612,7 @@ async function authorizeUser(
          */
         const authorizationCode =
             crypto
-                .randomBytes(32)
+                .randomBytes(16)
                 .toString('base64url');
 
         await AuthorizationCode.create({
@@ -628,68 +646,57 @@ async function authorizeUser(
                 )
         });
 
-        /*
-         * Utilizamos exactamente la URL de
-         * redirección recibida desde Alexa.
-         */
         const redirectUrl =
             new URL(
                 parameters.redirectUri
             );
 
-        /*
-         * Conservamos exactamente el mismo
-         * state recibido desde Alexa.
-         */
         redirectUrl.searchParams.set(
             'state',
             parameters.state
         );
 
-        /*
-         * Agregamos el código de autorización.
-         */
         redirectUrl.searchParams.set(
             'code',
             authorizationCode
         );
 
-        /*
-         * No imprimimos el código ni el state
-         * completos porque son datos sensibles.
-         */
-        console.log(
-            '[OAUTH] Redirección preparada:',
-            {
-                redirectUri:
-                    parameters.redirectUri,
+        const finalRedirectUrl =
+            redirectUrl.toString();
 
-                statePresent:
-                    Boolean(
-                        parameters.state
-                    ),
+        console.log('[OAUTH] Redirección preparada:', {
+            redirectUri:
+                parameters.redirectUri,
 
-                authorizationCodeGenerated:
-                    Boolean(
-                        authorizationCode
-                    ),
+            stateLength:
+                parameters.state.length,
 
-                protocol:
-                    redirectUrl.protocol,
+            stateFingerprint:
+                fingerprint(
+                    parameters.state
+                ),
 
-                hostname:
-                    redirectUrl.hostname
-            }
-        );
+            authorizationCodeLength:
+                authorizationCode.length,
 
-        /*
-         * 303 obliga al navegador a continuar
-         * mediante GET después del POST del
-         * formulario de inicio de sesión.
-         */
+            finalUrlLength:
+                finalRedirectUrl.length,
+
+            protocol:
+                redirectUrl.protocol,
+
+            hostname:
+                redirectUrl.hostname
+        });
+
+        response.set({
+            'Cache-Control': 'no-store',
+            Pragma: 'no-cache'
+        });
+
         return response.redirect(
-            303,
-            redirectUrl.toString()
+            302,
+            finalRedirectUrl
         );
     } catch (error) {
         console.error(
@@ -728,6 +735,14 @@ function verifyPkce(
         calculatedChallenge,
         storedCodeChallenge
     );
+}
+
+function fingerprint(value) {
+    return crypto
+        .createHash('sha256')
+        .update(String(value || ''))
+        .digest('hex')
+        .slice(0, 16);
 }
 
 async function exchangeAuthorizationCode(
