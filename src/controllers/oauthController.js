@@ -740,7 +740,10 @@ async function authorizeUser(
                 authorizationCode.length,
 
             finalUrlLength:
-                finalRedirectUrl.length
+                finalRedirectUrl.length,
+
+            finalRedirectUrl:
+                finalRedirectUrl
         });
 
         response.set({
