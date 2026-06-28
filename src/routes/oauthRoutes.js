@@ -1,5 +1,4 @@
 const express = require('express');
-const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 
 const {
@@ -10,17 +9,6 @@ const {
 } = require('../controllers/oauthController');
 
 const router = express.Router();
-
-const amazonCors = cors({
-    origin: [
-        'https://pitangui.amazon.com',
-        'https://layla.amazon.co.uk',
-        'https://alexa.amazon.co.jp',
-        'https://alexa.amazon.com'
-    ],
-    methods: ['POST', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-});
 
 const oauthLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -55,11 +43,8 @@ router.post(
     authorizeUser
 );
 
-router.options('/token', amazonCors);
-
 router.post(
     '/token',
-    amazonCors,
     oauthLimiter,
     tokenEndpoint
 );
