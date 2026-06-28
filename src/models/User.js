@@ -91,7 +91,7 @@ userSchema.methods.verifyPassword = async function verifyPassword(
 userSchema.statics.hashPassword = async function hashPassword(
     password
 ) {
-    const saltRounds = 12;
+    const saltRounds = 10;
 
     return bcrypt.hash(
         password,

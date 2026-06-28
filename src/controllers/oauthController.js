@@ -751,6 +751,13 @@ async function exchangeAuthorizationCode(
     next
 ) {
     try {
+        console.log('[TOKEN] Solicitud de intercambio de código recibida desde:', {
+            ip: request.ip,
+            grantType: request.body.grant_type,
+            hasCode: Boolean(request.body.code),
+            hasCodeVerifier: Boolean(request.body.code_verifier)
+        });
+
         if (!validateClient(request)) {
             return oauthError(
                 response,
