@@ -387,10 +387,18 @@ function buildAuthorizationPage(parameters, errorMessage = '') {
                 required
             >
 
-            <button type="submit">
+            <button type="submit" id="submit-btn">
                 Vincular cuenta
             </button>
         </form>
+
+        <script>
+            document.querySelector('form').addEventListener('submit', function () {
+                var btn = document.getElementById('submit-btn');
+                btn.disabled = true;
+                btn.textContent = 'Vinculando...';
+            });
+        </script>
 
         <p class="notice">
             Alexa recibirá autorización para identificar tu

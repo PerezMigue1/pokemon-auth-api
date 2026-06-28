@@ -82,6 +82,16 @@ app.use((request, response, next) => {
 app.use(helmet());
 
 /*
+ * Helmet establece Cross-Origin-Resource-Policy: same-origin globalmente.
+ * El token endpoint necesita cross-origin para que Amazon pueda leer
+ * la respuesta desde pitangui.amazon.com.
+ */
+app.use('/oauth/token', (request, response, next) => {
+    response.set('Cross-Origin-Resource-Policy', 'cross-origin');
+    next();
+});
+
+/*
  * La página OAuth y las imágenes se cargan desde
  * el mismo dominio. La API no permite solicitudes
  * JavaScript desde otros orígenes.
