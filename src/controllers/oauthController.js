@@ -45,17 +45,7 @@ function isAllowedRedirectUri(redirectUri) {
 
 function isValidClientId(clientId) {
     const expected = process.env.ALEXA_CLIENT_ID || '';
-    const match = typeof clientId === 'string' && clientId === expected;
-
-    if (!match) {
-        console.log('[DEBUG CLIENT_ID]', {
-            receivedLength: String(clientId || '').length,
-            expectedLength: expected.length,
-            envVarSet: Boolean(expected)
-        });
-    }
-
-    return match;
+    return typeof clientId === 'string' && clientId === expected;
 }
 
 function safeEqual(valueA, valueB) {
@@ -551,27 +541,6 @@ function showAuthorizationPage(
     const rawState =
         rawStateMatch ? rawStateMatch[1] : '';
 
-    console.log('[OAUTH] Solicitud de autorización:', {
-        redirectUri:
-            validation.parameters.redirectUri,
-
-        stateLength:
-            validation.parameters.state.length,
-
-        stateFingerprint:
-            fingerprint(
-                validation.parameters.state
-            ),
-
-        rawStateFingerprint:
-            fingerprint(rawState),
-
-        codeChallengePresent:
-            Boolean(
-                validation.parameters.codeChallenge
-            )
-    });
-
     response.set({
         'Cache-Control': 'no-store',
         Pragma: 'no-cache'
@@ -719,34 +688,6 @@ async function authorizeUser(
             '&code=' +
             encodeURIComponent(authorizationCode);
 
-        console.log('[OAUTH] Redirección preparada:', {
-            redirectUri:
-                parameters.redirectUri,
-
-            stateFingerprint:
-                fingerprint(parameters.state),
-
-            rawStateFingerprint:
-                fingerprint(rawState),
-
-            stateMatchesRaw:
-                fingerprint(parameters.state) ===
-                fingerprint(
-                    decodeURIComponent(
-                        rawState.replace(/\+/g, ' ')
-                    )
-                ),
-
-            authorizationCodeLength:
-                authorizationCode.length,
-
-            finalUrlLength:
-                finalRedirectUrl.length,
-
-            finalRedirectUrl:
-                finalRedirectUrl
-        });
-
         response.set({
             'Cache-Control': 'no-store',
             Pragma: 'no-cache'
@@ -795,13 +736,6 @@ function verifyPkce(
     );
 }
 
-function fingerprint(value) {
-    return crypto
-        .createHash('sha256')
-        .update(String(value || ''))
-        .digest('hex')
-        .slice(0, 16);
-}
 
 async function exchangeAuthorizationCode(
     request,
@@ -809,13 +743,6 @@ async function exchangeAuthorizationCode(
     next
 ) {
     try {
-        console.log('[TOKEN] Solicitud de intercambio de código recibida desde:', {
-            ip: request.ip,
-            grantType: request.body.grant_type,
-            hasCode: Boolean(request.body.code),
-            hasCodeVerifier: Boolean(request.body.code_verifier)
-        });
-
         if (!validateClient(request)) {
             return oauthError(
                 response,
