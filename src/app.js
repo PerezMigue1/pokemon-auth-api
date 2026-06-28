@@ -71,4 +71,21 @@ app.use((error, request, response, next) => {
     });
 });
 
+app.use((request, response, next) => {
+    const startedAt = Date.now();
+
+    console.log(
+        `[ENTRADA] ${request.method} ${request.originalUrl}`
+    );
+
+    response.on('finish', () => {
+        console.log(
+            `[SALIDA] ${request.method} ${request.originalUrl} ` +
+            `${response.statusCode} ${Date.now() - startedAt}ms`
+        );
+    });
+
+    next();
+});
+
 module.exports = app;
