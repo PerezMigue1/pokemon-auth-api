@@ -484,17 +484,18 @@ function validateAuthorizationParameters(query) {
     }
 
     /*
-     * En nuestro servidor haremos obligatorio PKCE S256.
+     * PKCE S256 es opcional: se verifica si Amazon lo envía,
+     * pero no se rechaza la solicitud si no viene.
      */
     if (
-        !codeChallenge ||
+        codeChallenge &&
         codeChallengeMethod !== 'S256'
     ) {
         return {
             valid: false,
             status: 400,
             message:
-                'Se requiere PKCE con code_challenge_method S256.'
+                'Solo se admite code_challenge_method S256.'
         };
     }
 
